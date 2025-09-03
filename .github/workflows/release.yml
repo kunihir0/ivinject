@@ -41,8 +41,24 @@ jobs:
           name: ivinject-win-x64
           path: bin/Release/net10.0/win-x64/publish/ivinject.exe
 
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build
+        run: dotnet publish -c Release -r linux-x64 --self-contained true
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: ivinject-linux-x64
+          path: bin/Release/net10.0/linux-x64/publish/ivinject
+
   release:
-    needs: [build-macos, build-windows]
+    needs: [build-macos, build-windows, build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -87,4 +103,14 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./ivinject-win-x64/ivinject.exe
           asset_name: ivinject-win-x64.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./ivinject-linux-x64/ivinject
+          asset_name: ivinject-linux-x64
           asset_content_type: application/octet-stream
